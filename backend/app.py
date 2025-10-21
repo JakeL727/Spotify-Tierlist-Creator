@@ -10,7 +10,7 @@ from spotipy.oauth2 import SpotifyClientCredentials
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key-change-in-production")
-CORS(app, origins=["https://spotify-tierlist-creator.vercel.app", "http://localhost:5173"], supports_credentials=True)
+CORS(app, origins=os.getenv("FRONTEND_ORIGIN","*"), supports_credentials=True)
 
 CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
@@ -29,8 +29,20 @@ def oauth():
         client_secret=CLIENT_SECRET,
         redirect_uri=REDIRECT_URI,
         scope=" ".join(SCOPES),
-        cache_path=".spotipy_cache"
+        cache_path=None  # Remove shared cache for security
     )
+
+def get_user_spotify():
+    """Get Spotify instance for the current user from session"""
+    token_info = session.get('token_info')
+    if not token_info:
+        return None
+    
+    # Check if token is expired
+    if oauth().is_token_expired(token_info):
+        return None
+    
+    return spotipy.Spotify(auth=token_info['access_token'])
 
 @app.get("/login")
 def login():
@@ -40,7 +52,11 @@ def login():
 def callback():
     code = request.args.get("code")
     oauth_mgr = oauth()
-    oauth_mgr.get_access_token(code, as_dict=False)
+    token_info = oauth_mgr.get_access_token(code, as_dict=True)
+    
+    # Store token in session for this user
+    session['token_info'] = token_info
+    
     return redirect(os.getenv("FRONTEND_ORIGIN","http://localhost:5173"))
 
 def extract_playlist_id(url_or_id: str):
@@ -69,7 +85,10 @@ def get_playlist_tracks():
     except Exception as e:
         # If client credentials fail, try with user authentication
         try:
-            sp = spotipy.Spotify(auth_manager=oauth())
+            sp = get_user_spotify()
+            if not sp:
+                return jsonify({"error": "playlist_not_accessible", "message": "This playlist is private or doesn't exist. Please log in to access private playlists."}), 403
+            
             playlist_info = sp.playlist(pid)
             is_public = False
         except Exception as auth_error:
@@ -106,7 +125,10 @@ def get_playlist_tracks():
 def auth_status():
     """Check if user is authenticated"""
     try:
-        sp = spotipy.Spotify(auth_manager=oauth())
+        sp = get_user_spotify()
+        if not sp:
+            return jsonify({"authenticated": False})
+        
         user_info = sp.current_user()
         return jsonify({
             "authenticated": True,
@@ -122,12 +144,8 @@ def auth_status():
 @app.get("/api/logout")
 def logout():
     """Logout user by clearing session"""
-    # Clear any cached tokens
-    try:
-        oauth_mgr = oauth()
-        oauth_mgr.cache_path = None  # Clear cache
-    except:
-        pass
+    # Clear session data for this user
+    session.pop('token_info', None)
     return jsonify({"status": "logged_out"})
 
 @app.get("/health")
