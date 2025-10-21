@@ -30,12 +30,21 @@ client_credentials_manager = SpotifyClientCredentials(
 )
 
 def oauth():
+    # Use session-specific cache file for security
+    session_id = session.get('session_id')
+    if not session_id:
+        # Generate a unique session ID if none exists
+        import uuid
+        session_id = str(uuid.uuid4())
+        session['session_id'] = session_id
+    
+    cache_path = f".spotipy_cache_{session_id}"
     return SpotifyOAuth(
         client_id=CLIENT_ID,
         client_secret=CLIENT_SECRET,
         redirect_uri=REDIRECT_URI,
         scope=" ".join(SCOPES),
-        cache_path=".spotipy_cache"  # Use cache file for proper logout
+        cache_path=cache_path
     )
 
 def get_user_spotify():
@@ -172,17 +181,22 @@ def auth_status():
 def logout():
     """Logout user by clearing cached tokens"""
     try:
+        # Get session ID before clearing session
+        session_id = session.get('session_id')
+        
         # Clear session data
         session.pop('token_info', None)
+        session.pop('session_id', None)
         
-        # Clear the cache file completely
+        # Clear the user-specific cache file
         import os
-        cache_file = ".spotipy_cache"
-        if os.path.exists(cache_file):
-            os.remove(cache_file)
-            print("Logout: Removed cache file")  # Debug log
+        if session_id:
+            cache_file = f".spotipy_cache_{session_id}"
+            if os.path.exists(cache_file):
+                os.remove(cache_file)
+                print(f"Logout: Removed user-specific cache file {cache_file}")  # Debug log
         
-        print("Logout: Cleared session and cache file")  # Debug log
+        print("Logout: Cleared session and user-specific cache file")  # Debug log
     except Exception as e:
         print(f"Logout error: {e}")  # Debug log
     
