@@ -54,20 +54,44 @@ def get_user_spotify():
     token_info = session.get('token_info')
     
     if not token_info:
-        # Fallback to cache file
-        try:
-            oauth_mgr = oauth()
-            token_info = oauth_mgr.get_cached_token()
-            if not token_info or oauth_mgr.is_token_expired(token_info):
-                return None
-        except Exception as e:
-            print(f"Cache check error in get_user_spotify: {e}")
-            return None
-    else:
-        # Check if session token is expired
-        if oauth().is_token_expired(token_info):
+        # Fallback to cache file using session_id from session
+        session_id = session.get('session_id')
+        if session_id:
+            try:
+                cache_path = f".spotipy_cache_{session_id}"
+                import os
+                if os.path.exists(cache_path):
+                    # Read and parse the cache file directly
+                    with open(cache_path, 'r') as f:
+                        import json
+                        token_info = json.load(f)
+                        # Check if token is expired
+                        import time
+                        if token_info.get('expires_at', 0) < time.time():
+                            print(f"Token expired in cache file {cache_path}")
+                            token_info = None
+                        else:
+                            print(f"Found valid token in cache file {cache_path}")
+                else:
+                    print(f"Cache file {cache_path} does not exist")
+            except Exception as e:
+                print(f"Cache check error in get_user_spotify: {e}")
+                token_info = None
+        else:
+            print("No session_id found in session")
+    
+    if not token_info:
+        print("No valid token found in get_user_spotify")
+        return None
+    
+    # Check if session token is expired (for session-based tokens)
+    if 'expires_at' in token_info:
+        import time
+        if token_info.get('expires_at', 0) < time.time():
+            print("Session token is expired")
             return None
     
+    print(f"Creating Spotify instance with token for user")
     return spotipy.Spotify(auth=token_info['access_token'])
 
 @app.get("/login")
