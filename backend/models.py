@@ -3,7 +3,17 @@ from sqlalchemy import Column, Integer, String, Text, create_engine, Index, Uniq
 from sqlalchemy.orm import declarative_base, sessionmaker
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///tierlist.db")
+# Get database URL from environment
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# For local development, use SQLite if no DATABASE_URL is provided
+if not DATABASE_URL:
+    # Check if we're in a production environment (Railway sets RAILWAY_ENVIRONMENT)
+    if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("PORT"):
+        raise ValueError("DATABASE_URL environment variable is required in production")
+    else:
+        # Local development fallback to SQLite
+        DATABASE_URL = "sqlite:///tierlist.db"
 
 # Convert SQLite URL to PostgreSQL if needed for production
 if DATABASE_URL.startswith("postgres://"):
