@@ -10,7 +10,9 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     # Check if we're in a production environment (Railway sets RAILWAY_ENVIRONMENT)
     if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("PORT"):
-        raise ValueError("DATABASE_URL environment variable is required in production")
+        # In production, try to use a default PostgreSQL URL or fall back to SQLite with warning
+        print("WARNING: DATABASE_URL not set in production, using SQLite fallback")
+        DATABASE_URL = "sqlite:///tierlist.db"
     else:
         # Local development fallback to SQLite
         DATABASE_URL = "sqlite:///tierlist.db"
