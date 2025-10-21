@@ -56,6 +56,7 @@ def callback():
     
     # Store token in session for this user
     session['token_info'] = token_info
+    print(f"Callback: Stored token in session for user")  # Debug log
     
     return redirect(os.getenv("FRONTEND_ORIGIN","http://localhost:5173"))
 
@@ -125,11 +126,14 @@ def get_playlist_tracks():
 def auth_status():
     """Check if user is authenticated"""
     try:
+        print(f"Session data: {dict(session)}")  # Debug log
         sp = get_user_spotify()
         if not sp:
+            print("No Spotify instance - not authenticated")  # Debug log
             return jsonify({"authenticated": False})
         
         user_info = sp.current_user()
+        print(f"User authenticated: {user_info.get('display_name')}")  # Debug log
         return jsonify({
             "authenticated": True,
             "user": {
@@ -138,7 +142,8 @@ def auth_status():
                 "email": user_info.get("email")
             }
         })
-    except Exception:
+    except Exception as e:
+        print(f"Auth status error: {e}")  # Debug log
         return jsonify({"authenticated": False})
 
 @app.get("/api/logout")
