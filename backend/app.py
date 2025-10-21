@@ -1,21 +1,27 @@
 # backend/app.py
 import os, re, json
-from flask import Flask, request, jsonify, redirect
+from flask import Flask, request, jsonify, redirect, session
 from flask_cors import CORS
 from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
-from models import SessionLocal, init_db, TierSave
+from spotipy.oauth2 import SpotifyClientCredentials
 
 load_dotenv()
 app = Flask(__name__)
-CORS(app, origins=os.getenv("FRONTEND_ORIGIN","*"))
-init_db()
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key-change-in-production")
+CORS(app, origins=os.getenv("FRONTEND_ORIGIN","*"), supports_credentials=True)
 
 CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI", "http://localhost:5000/callback")
 SCOPES = os.getenv("SPOTIFY_SCOPES", "playlist-read-private playlist-read-collaborative").split()
+
+# Client credentials for public playlist access
+client_credentials_manager = SpotifyClientCredentials(
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET
+)
 
 def oauth():
     return SpotifyOAuth(
@@ -50,7 +56,25 @@ def get_playlist_tracks():
     if not pid:
         return jsonify({"error": "invalid_playlist"}), 400
 
-    sp = spotipy.Spotify(auth_manager=oauth())
+    # Try to get playlist info first to determine if it's public or private
+    try:
+        # First try with client credentials (public playlists only)
+        sp_public = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+        playlist_info = sp_public.playlist(pid)
+        
+        # If we can access it with client credentials, it's public
+        sp = sp_public
+        is_public = True
+        
+    except Exception as e:
+        # If client credentials fail, try with user authentication
+        try:
+            sp = spotipy.Spotify(auth_manager=oauth())
+            playlist_info = sp.playlist(pid)
+            is_public = False
+        except Exception as auth_error:
+            return jsonify({"error": "playlist_not_accessible", "message": "This playlist is private or doesn't exist. Please log in to access private playlists."}), 403
+
     tracks = []
     results = sp.playlist_items(pid, additional_types=("track",), limit=100)
     while results:
@@ -71,44 +95,40 @@ def get_playlist_tracks():
             results = sp.next(results)
         else:
             results = None
-    return jsonify(tracks)
+    
+    return jsonify({
+        "tracks": tracks,
+        "playlist_name": playlist_info.get("name", "Unknown Playlist"),
+        "is_public": is_public
+    })
 
-@app.post("/api/save_tier")
-def save_tier():
-    body = request.get_json() or {}
-    user = (body.get("user") or "").strip().lower()
-    pid  = (body.get("playlistId") or "").strip()
-    data = body.get("data")
-    if not user or not pid or data is None:
-        return jsonify({"error": "missing_fields"}), 400
-    s = SessionLocal()
+@app.get("/api/auth_status")
+def auth_status():
+    """Check if user is authenticated"""
     try:
-        row = s.query(TierSave).filter_by(user=user, playlist_id=pid).first()
-        payload = json.dumps(data, separators=(",",":"))
-        if row:
-            row.data_json = payload
-        else:
-            row = TierSave(user=user, playlist_id=pid, data_json=payload)
-            s.add(row)
-        s.commit()
-        return jsonify({"status": "ok"})
-    finally:
-        s.close()
+        sp = spotipy.Spotify(auth_manager=oauth())
+        user_info = sp.current_user()
+        return jsonify({
+            "authenticated": True,
+            "user": {
+                "id": user_info.get("id"),
+                "display_name": user_info.get("display_name"),
+                "email": user_info.get("email")
+            }
+        })
+    except Exception:
+        return jsonify({"authenticated": False})
 
-@app.get("/api/load_tier")
-def load_tier():
-    user = (request.args.get("user") or "").strip().lower()
-    pid  = (request.args.get("playlistId") or "").strip()
-    if not user or not pid:
-        return jsonify({"error": "missing_fields"}), 400
-    s = SessionLocal()
+@app.get("/api/logout")
+def logout():
+    """Logout user by clearing session"""
+    # Clear any cached tokens
     try:
-        row = s.query(TierSave).filter_by(user=user, playlist_id=pid).first()
-        if not row:
-            return jsonify({"found": False})
-        return jsonify({"found": True, "data": json.loads(row.data_json)})
-    finally:
-        s.close()
+        oauth_mgr = oauth()
+        oauth_mgr.cache_path = None  # Clear cache
+    except:
+        pass
+    return jsonify({"status": "logged_out"})
 
 @app.get("/health")
 def health():

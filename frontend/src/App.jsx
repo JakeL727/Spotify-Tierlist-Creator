@@ -19,7 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import * as htmlToImage from "html-to-image";
-import { fetchPlaylistTracks } from "./api";
+import { fetchPlaylistTracks, checkAuthStatus, logout } from "./api";
 
 /* ---------- helpers ---------- */
 function defaultColorForTier(t) {
@@ -120,6 +120,10 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [activeId, setActiveId] = useState(null);
+  
+  // Authentication
+  const [authStatus, setAuthStatus] = useState({ authenticated: false });
+  const [playlistName, setPlaylistName] = useState("");
 
   // SETTINGS state
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -137,6 +141,11 @@ export default function App() {
 
   const tiersRef = useRef(null);
 
+  // Check authentication status on app load
+  React.useEffect(() => {
+    checkAuthStatus().then(setAuthStatus);
+  }, []);
+
   const filteredPool = useMemo(() => {
     const q = filter.trim().toLowerCase();
     if (!q) return pool;
@@ -150,11 +159,25 @@ export default function App() {
   async function loadPlaylist() {
     try {
       setErr(""); setLoading(true);
-      const tracks = await fetchPlaylistTracks(playlistUrl);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/playlist?` + new URLSearchParams({ q: playlistUrl }));
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to fetch playlist");
+      }
+      
+      const data = await response.json();
+      const tracks = data.tracks;
       const seen = new Set();
       const dedup = tracks.filter(t => t.id && !seen.has(t.id) && seen.add(t.id));
       setPool(dedup);
       setLanes(Object.fromEntries(tiers.map(t => [t, []])));
+      setPlaylistName(data.playlist_name || "Unknown Playlist");
+      
+      // Update auth status if we got user info
+      if (data.is_public === false) {
+        checkAuthStatus().then(setAuthStatus);
+      }
     } catch (e) {
       setErr(e.message || "Failed to load playlist");
     } finally {
@@ -247,7 +270,12 @@ export default function App() {
   async function exportPNG() {
     if (!tiersRef.current) return;
     const url = await htmlToImage.toPng(tiersRef.current, { pixelRatio: 2 });
-    const a = document.createElement("a"); a.href = url; a.download = "tier-board.png"; a.click();
+    const a = document.createElement("a"); a.href = url; a.download = `${playlistName || 'tier-list'}.png`; a.click();
+  }
+
+  async function handleLogout() {
+    await logout();
+    setAuthStatus({ authenticated: false });
   }
 
   function openSettings() {
@@ -381,11 +409,22 @@ export default function App() {
         <button className="btn" onClick={loadPlaylist} disabled={loading}>
           {loading ? "Loading…" : "Load"}
         </button>
-        <a className="btn ghost" href={`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/login`} target="_blank" rel="noreferrer">Authorize</a>
+        {authStatus.authenticated ? (
+          <button className="btn ghost" onClick={handleLogout}>
+            Logout ({authStatus.user?.display_name || 'User'})
+          </button>
+        ) : (
+          <a className="btn ghost" href={`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/login`} target="_blank" rel="noreferrer">
+            Login for Private Playlists
+          </a>
+        )}
         <button className="btn" onClick={exportPNG}>Export PNG</button>
       </div>
 
-      <p className="disclaimer">🔒 You only need to click <b>Authorize</b> if you want to load <em>private playlists</em>. Public playlists will work without it.</p>
+      <p className="disclaimer">
+        🔒 <b>Public playlists</b> work without login. <b>Private playlists</b> require Spotify authentication.
+        {authStatus.authenticated && " ✅ You're logged in and can access private playlists."}
+      </p>
 
       <DndContext
         sensors={boardSensors}
