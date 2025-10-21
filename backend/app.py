@@ -130,14 +130,30 @@ def get_playlist_tracks():
 
 @app.get("/api/auth_status")
 def auth_status():
-    """Check if user is authenticated"""
+    """Check if user is authenticated by testing Spotify API access"""
     try:
         print(f"Session data: {dict(session)}")  # Debug log
+        
+        # Try to get user Spotify instance
         sp = get_user_spotify()
         if not sp:
-            print("No Spotify instance - not authenticated")  # Debug log
-            return jsonify({"authenticated": False})
+            print("No Spotify instance from session - trying alternative auth")  # Debug log
+            
+            # Try using the OAuth manager to get cached token
+            try:
+                oauth_mgr = oauth()
+                token_info = oauth_mgr.get_cached_token()
+                if token_info and not oauth_mgr.is_token_expired(token_info):
+                    sp = spotipy.Spotify(auth=token_info['access_token'])
+                    print("Found cached token, testing API access")  # Debug log
+                else:
+                    print("No valid cached token found")  # Debug log
+                    return jsonify({"authenticated": False})
+            except Exception as cache_error:
+                print(f"Cache check error: {cache_error}")  # Debug log
+                return jsonify({"authenticated": False})
         
+        # Test actual API access
         user_info = sp.current_user()
         print(f"User authenticated: {user_info.get('display_name')}")  # Debug log
         return jsonify({
