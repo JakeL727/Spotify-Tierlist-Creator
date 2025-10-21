@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import {
   DndContext,
-  pointerWithin,
+  closestCenter,
   useDroppable,
   DragOverlay,
   useSensor,
@@ -135,7 +135,7 @@ export default function App() {
   const [settingsTypingId, setSettingsTypingId] = useState(null);
 
   // Sensors
-  const boardSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const boardSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 10 } }));
   const settingsSensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 6 } })
@@ -430,7 +430,7 @@ export default function App() {
 
       <DndContext
         sensors={boardSensors}
-        collisionDetection={pointerWithin}
+        collisionDetection={closestCenter}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
         onDragCancel={onDragCancel}

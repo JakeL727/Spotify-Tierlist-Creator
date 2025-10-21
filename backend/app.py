@@ -10,7 +10,7 @@ from spotipy.oauth2 import SpotifyClientCredentials
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key-change-in-production")
-CORS(app, origins=os.getenv("FRONTEND_ORIGIN","*"), supports_credentials=True)
+CORS(app, origins=["https://spotify-tierlist-creator.vercel.app", "http://localhost:5173"], supports_credentials=True)
 
 CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
