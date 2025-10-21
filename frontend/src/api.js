@@ -12,7 +12,9 @@ export async function fetchPlaylistTracks(q) {
 
 export async function checkAuthStatus() {
   try {
-    const r = await fetch(`${API}/api/auth_status`);
+    const r = await fetch(`${API}/api/auth_status`, {
+      credentials: 'include'  // Include cookies for session
+    });
     if (!r.ok) return { authenticated: false };
     return await r.json();
   } catch {
@@ -22,7 +24,9 @@ export async function checkAuthStatus() {
 
 export async function logout() {
   try {
-    await fetch(`${API}/api/logout`);
+    await fetch(`${API}/api/logout`, {
+      credentials: 'include'  // Include cookies for session
+    });
   } catch {
     // Ignore errors
   }

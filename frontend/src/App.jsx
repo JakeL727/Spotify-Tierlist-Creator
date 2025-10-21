@@ -145,11 +145,18 @@ export default function App() {
 
   // Check authentication status on app load and when returning from OAuth
   React.useEffect(() => {
-    checkAuthStatus().then(setAuthStatus);
+    checkAuthStatus().then((status) => {
+      console.log('Auth status:', status); // Debug log
+      setAuthStatus(status);
+    });
     
     // Check auth status when window regains focus (user returns from OAuth)
     const handleFocus = () => {
-      checkAuthStatus().then(setAuthStatus);
+      console.log('Window focused, checking auth status'); // Debug log
+      checkAuthStatus().then((status) => {
+        console.log('Auth status on focus:', status); // Debug log
+        setAuthStatus(status);
+      });
     };
     
     window.addEventListener('focus', handleFocus);
