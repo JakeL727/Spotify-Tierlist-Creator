@@ -14,7 +14,7 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key-change-in-product
 # Configure session for production
 app.config['SESSION_COOKIE_SECURE'] = True  # Use secure cookies in production
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent XSS
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Allow cross-site requests
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Allow cross-site requests (required for cross-domain)
 
 CORS(app, origins=os.getenv("FRONTEND_ORIGIN","*"), supports_credentials=True)
 
@@ -61,18 +61,38 @@ def get_user_spotify():
 
 @app.get("/login")
 def login():
-    return redirect(oauth().get_authorize_url())
-
-@app.get("/callback")
-def callback():
-    code = request.args.get("code")
-    
-    # Get the existing session_id or create one
+    # Generate session_id and store in session
     session_id = session.get('session_id')
     if not session_id:
         import uuid
         session_id = str(uuid.uuid4())
         session['session_id'] = session_id
+    
+    # Create OAuth manager with this session_id
+    oauth_mgr = SpotifyOAuth(
+        client_id=CLIENT_ID,
+        client_secret=CLIENT_SECRET,
+        redirect_uri=REDIRECT_URI,
+        scope=" ".join(SCOPES),
+        cache_path=f".spotipy_cache_{session_id}",
+        state=session_id  # Pass session_id as state parameter
+    )
+    
+    return redirect(oauth_mgr.get_authorize_url())
+
+@app.get("/callback")
+def callback():
+    code = request.args.get("code")
+    state = request.args.get("state")  # Extract session_id from state parameter
+    
+    # Use session_id from state parameter (passed from login)
+    session_id = state
+    if not session_id:
+        print("Error: No state parameter received in callback")  # Debug log
+        return redirect(os.getenv("FRONTEND_ORIGIN","http://localhost:5173"))
+    
+    # Store session_id in session for future requests
+    session['session_id'] = session_id
     
     # Use the same cache path as login
     oauth_mgr = SpotifyOAuth(
