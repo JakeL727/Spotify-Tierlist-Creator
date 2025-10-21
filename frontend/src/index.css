@@ -1,0 +1,176 @@
+.theme-light{
+  --bg: #f6f8fc;
+  --surface: #ffffff;
+  --row: #f2f4fa;
+  --border: #dfe3ef;
+  --text: #0f172a;
+  --muted: #475569;
+  --btn: #e9ecf6;
+  --btn-border: #cbd5e1;
+  --tile: #ffffff;
+  --tile-border: #e2e8f0;
+  --input-bg: #ffffff;
+  --input-border: #cbd5e1;
+  --accent: #0f62fe;
+  --shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+/* Dark — near-black surfaces, light text */
+.theme-dark{
+  --bg: #0a0e1a;
+  --surface: #0f1427;
+  --row: #151c33;
+  --border: #1e2747;
+  --text: #e6edff;
+  --muted: #a8b5cf;
+  --btn: #152044;
+  --btn-border: #23305c;
+  --tile: #101633;
+  --tile-border: #23305c;
+  --input-bg: #0f1530;
+  --input-border: #23305c;
+  --accent: #4f7cff;
+  --shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;font-family:system-ui,Segoe UI,Roboto,Arial}
+.wrap{
+  max-width:1200px;margin:0 auto;padding:20px;
+  background:var(--bg); color:var(--text);
+  min-height:100vh;
+}
+
+/* Topbar */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.topbar h1{margin:0;font-size:1.4rem}
+.topbar-actions{display:flex;gap:8px;align-items:center}
+.icon-btn{
+  background:var(--btn); border:1px solid var(--btn-border);
+  color:var(--text); border-radius:10px; padding:8px 10px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.icon-btn:hover{filter:brightness(1.05)}
+
+/* General controls */
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.input{
+  flex:1; min-width:240px; background:var(--input-bg); color:var(--text);
+  border:1px solid var(--input-border); border-radius:10px; padding:10px 12px
+}
+.input.small{min-width:140px; flex:0 0 200px}
+.btn{
+  background:var(--btn); border:1px solid var(--btn-border); color:var(--text);
+  padding:10px 14px; border-radius:10px; cursor:pointer; box-shadow:var(--shadow)
+}
+.btn:hover{filter:brightness(1.05)}
+.btn.ghost{background:transparent}
+.btn.danger{background:#ffe5e5; border-color:#ffb3b3; color:#7a0d0d}
+.theme-dark .btn.danger{background:#401a1a; border-color:#6a2727; color:#ffb8b8}
+
+.alert{margin:10px 0;padding:10px 12px;border-radius:10px;background:#fff3cd;border:1px solid #ffe69c;color:#7a5f00}
+.theme-dark .alert{background:#2f240f;border-color:#6e540f;color:#ffd56a}
+
+.disclaimer{font-size:.9rem;color:var(--muted); margin:4px 0 12px 4px}
+.disclaimer b{color:var(--text)}
+
+/* Layout */
+.board{display:flex;flex-direction:column;gap:16px}
+
+/* Pool (unranked) */
+.pool{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;box-shadow:var(--shadow)}
+.pool-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.pool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.pool-grid.compact{grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px}
+
+/* Tier rows */
+.tiers{display:flex;flex-direction:column;gap:10px}
+.tier-row{
+  display:grid;grid-template-columns:220px 1fr;align-items:center;background:var(--row);
+  border:1px solid var(--border);border-radius:12px;overflow:hidden;position:relative;z-index:0;box-shadow:var(--shadow)
+}
+.tier-badge{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  font-weight:800;font-size:1.1rem;height:100%;padding:8px;border-right:1px solid #0001;color:#0f1115
+}
+.tier-badge-text{max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tier-drop{padding:10px;min-height:120px;display:flex;gap:10px;flex-wrap:wrap}
+
+/* Tile */
+.tile{
+  background:var(--tile); border:1px solid var(--tile-border); border-radius:12px; padding:8px;
+  display:flex;flex-direction:column;gap:6px;align-items:flex-start;width:120px; box-shadow:var(--shadow)
+}
+.tile-img{width:100%;aspect-ratio:1/1;border-radius:8px;object-fit:cover}
+.tile-meta{width:100%}
+.tile-title{font-weight:600;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.tile-artist{font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile.is-dragging{opacity:.25}
+
+/* Compact tiles */
+.tile.compact{width:72px;padding:4px;border-radius:10px}
+.tile.compact .tile-img{border-radius:6px}
+.tile.compact .tile-meta{display:none}
+
+/* Search just under tiers */
+.under-tiers{margin-top:4px;margin-bottom:6px}
+
+/* Settings panel */
+.settings{
+  position: fixed; top: 20px; right: 20px; width: 360px; max-width: calc(100% - 40px);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: var(--shadow); z-index: 50; overflow: hidden;
+}
+.settings-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px;border-bottom:1px solid var(--border)
+}
+.settings-body{padding:10px 12px;max-height:60vh;overflow:auto}
+.settings-group{display:flex;flex-direction:column;gap:10px}
+.settings-row{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:8px}
+.tag{
+  font-size:.85rem;background:var(--row);border:1px solid var(--border);
+  padding:6px 8px;border-radius:8px;min-width:38px;text-align:center;color:var(--text)
+}
+.color-input{
+  width:36px;height:36px;border:none;background:transparent;cursor:pointer;padding:0
+}
+
+/* Responsive */
+@media (max-width: 900px){
+  .tier-row{grid-template-columns:150px 1fr}
+  .pool-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}
+}
+.drag-handle { cursor: grab; padding:6px; line-height: 1; }
+.drag-handle:active { cursor: grabbing; }
+.pool-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.pool-actions{display:flex;align-items:center;gap:8px}
+
+/* Compact mode still shows a tiny name */
+.tile-meta.compact{display:block}
+.tile-title.compact{
+  font-size: .7rem;
+  line-height: 1.1;
+  margin-top: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Drag handle cursor */
+.drag-handle { cursor: grab; }
+.drag-handle:active { cursor: grabbing; }
+/* Pool header with actions (compact toggle) */
+.pool-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.pool-actions{display:flex;align-items:center;gap:8px}
+
+/* Compact mode: still show a tiny name under art */
+.tile.compact .tile-meta{display:block}          /* override any previous display:none */
+.tile-title.compact{
+  font-size:.7rem;
+  line-height:1.1;
+  margin-top:4px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* Drag handle cursor */
+.drag-handle { cursor: grab; }
+.drag-handle:active { cursor: grabbing; }
