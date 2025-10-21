@@ -20,6 +20,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import * as htmlToImage from "html-to-image";
 import { fetchPlaylistTracks, checkAuthStatus, logout } from "./api";
+import { Analytics } from "@vercel/analytics/react";
 
 /* ---------- helpers ---------- */
 function defaultColorForTier(t) {
@@ -501,6 +502,7 @@ export default function App() {
       )}
 
       {err && <div className="alert">{err}</div>}
+      <Analytics />
     </div>
   );
 }
