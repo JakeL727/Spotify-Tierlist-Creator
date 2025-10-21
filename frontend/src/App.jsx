@@ -143,9 +143,21 @@ export default function App() {
 
   const tiersRef = useRef(null);
 
-  // Check authentication status on app load
+  // Check authentication status on app load and when returning from OAuth
   React.useEffect(() => {
     checkAuthStatus().then(setAuthStatus);
+    
+    // Check auth status when window regains focus (user returns from OAuth)
+    const handleFocus = () => {
+      checkAuthStatus().then(setAuthStatus);
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const filteredPool = useMemo(() => {
