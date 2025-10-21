@@ -66,12 +66,28 @@ def login():
 @app.get("/callback")
 def callback():
     code = request.args.get("code")
-    oauth_mgr = oauth()
+    
+    # Get the existing session_id or create one
+    session_id = session.get('session_id')
+    if not session_id:
+        import uuid
+        session_id = str(uuid.uuid4())
+        session['session_id'] = session_id
+    
+    # Use the same cache path as login
+    oauth_mgr = SpotifyOAuth(
+        client_id=CLIENT_ID,
+        client_secret=CLIENT_SECRET,
+        redirect_uri=REDIRECT_URI,
+        scope=" ".join(SCOPES),
+        cache_path=f".spotipy_cache_{session_id}"
+    )
+    
     token_info = oauth_mgr.get_access_token(code, as_dict=True)
     
     # Store token in session for this user
     session['token_info'] = token_info
-    print(f"Callback: Stored token in session for user")  # Debug log
+    print(f"Callback: Stored token in session for user {session_id}")  # Debug log
     
     return redirect(os.getenv("FRONTEND_ORIGIN","http://localhost:5173"))
 
