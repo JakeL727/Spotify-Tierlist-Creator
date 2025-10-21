@@ -35,7 +35,7 @@ def oauth():
         client_secret=CLIENT_SECRET,
         redirect_uri=REDIRECT_URI,
         scope=" ".join(SCOPES),
-        cache_path=None  # Remove shared cache for security
+        cache_path=".spotipy_cache"  # Use cache file for proper logout
     )
 
 def get_user_spotify():
@@ -175,20 +175,14 @@ def logout():
         # Clear session data
         session.pop('token_info', None)
         
-        # Clear cached OAuth tokens by invalidating them
-        # Since cache_path=None, we need to clear any in-memory tokens
-        oauth_mgr = oauth()
-        try:
-            # Try to get cached token and invalidate it
-            cached_token = oauth_mgr.get_cached_token()
-            if cached_token:
-                # Force token expiration by setting a very old timestamp
-                cached_token['expires_at'] = 0
-                print("Logout: Invalidated cached token")  # Debug log
-        except:
-            pass  # No cached token to clear
+        # Clear the cache file completely
+        import os
+        cache_file = ".spotipy_cache"
+        if os.path.exists(cache_file):
+            os.remove(cache_file)
+            print("Logout: Removed cache file")  # Debug log
         
-        print("Logout: Cleared session and cached tokens")  # Debug log
+        print("Logout: Cleared session and cache file")  # Debug log
     except Exception as e:
         print(f"Logout error: {e}")  # Debug log
     
