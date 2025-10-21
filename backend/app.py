@@ -10,6 +10,12 @@ from spotipy.oauth2 import SpotifyClientCredentials
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key-change-in-production")
+
+# Configure session for production
+app.config['SESSION_COOKIE_SECURE'] = True  # Use secure cookies in production
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent XSS
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Allow cross-site requests
+
 CORS(app, origins=os.getenv("FRONTEND_ORIGIN","*"), supports_credentials=True)
 
 CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
