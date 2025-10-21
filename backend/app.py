@@ -15,6 +15,7 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-key-change-in-product
 app.config['SESSION_COOKIE_SECURE'] = True  # Use secure cookies in production
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent XSS
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Allow cross-site requests (required for cross-domain)
+app.config['SESSION_PERMANENT'] = False  # Session expires when browser closes
 
 CORS(app, origins=os.getenv("FRONTEND_ORIGIN","*"), supports_credentials=True)
 
@@ -146,14 +147,20 @@ def get_playlist_tracks():
         
     except Exception as e:
         # If client credentials fail, try with user authentication
+        error_msg = str(e)
         try:
             sp = get_user_spotify()
             if not sp:
+                if "404" in error_msg or "not found" in error_msg.lower():
+                    return jsonify({"error": "playlist_not_found", "message": "Playlist not found. Please check the playlist URL or ID."}), 404
                 return jsonify({"error": "playlist_not_accessible", "message": "This playlist is private or doesn't exist. Please log in to access private playlists."}), 403
             
             playlist_info = sp.playlist(pid)
             is_public = False
         except Exception as auth_error:
+            auth_error_msg = str(auth_error)
+            if "404" in auth_error_msg or "not found" in auth_error_msg.lower():
+                return jsonify({"error": "playlist_not_found", "message": "Playlist not found. Please check the playlist URL or ID."}), 404
             return jsonify({"error": "playlist_not_accessible", "message": "This playlist is private or doesn't exist. Please log in to access private playlists."}), 403
 
     tracks = []
