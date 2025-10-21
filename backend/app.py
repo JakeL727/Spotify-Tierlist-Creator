@@ -48,14 +48,24 @@ def oauth():
     )
 
 def get_user_spotify():
-    """Get Spotify instance for the current user from session"""
+    """Get Spotify instance for the current user from session or cache"""
+    # Try session first
     token_info = session.get('token_info')
-    if not token_info:
-        return None
     
-    # Check if token is expired
-    if oauth().is_token_expired(token_info):
-        return None
+    if not token_info:
+        # Fallback to cache file
+        try:
+            oauth_mgr = oauth()
+            token_info = oauth_mgr.get_cached_token()
+            if not token_info or oauth_mgr.is_token_expired(token_info):
+                return None
+        except Exception as e:
+            print(f"Cache check error in get_user_spotify: {e}")
+            return None
+    else:
+        # Check if session token is expired
+        if oauth().is_token_expired(token_info):
+            return None
     
     return spotipy.Spotify(auth=token_info['access_token'])
 
