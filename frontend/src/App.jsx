@@ -416,7 +416,7 @@ export default function App() {
             Logout ({authStatus.user?.display_name || 'User'})
           </button>
         ) : (
-          <a className="btn ghost" href={`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/login`} target="_blank" rel="noreferrer">
+          <a className="btn ghost" href={`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/login`}>
             Login for Private Playlists
           </a>
         )}
