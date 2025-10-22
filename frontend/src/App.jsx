@@ -197,8 +197,18 @@ export default function App() {
 
     const from = containerOf(active.id);
     const possibleTargets = ["POOL", ...tiers];
-    const to   = possibleTargets.includes(over.id) ? over.id : containerOf(over.id);
-    const overId = possibleTargets.includes(over.id) ? null : over.id;
+    
+    // Improved logic for determining drop target
+    let to, overId;
+    if (possibleTargets.includes(over.id)) {
+      // Dropped directly on a tier or pool
+      to = over.id;
+      overId = null;
+    } else {
+      // Dropped on an item within a container
+      to = containerOf(over.id);
+      overId = over.id;
+    }
 
     if (!from || !to) return;
 
