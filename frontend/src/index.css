@@ -94,7 +94,7 @@ body{margin:0;background:#0b1020;font-family:system-ui,Segoe UI,Roboto,Arial}
   font-weight:800;font-size:1.1rem;height:100%;padding:8px;border-right:1px solid #0001;color:#0f1115
 }
 .tier-badge-text{max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tier-drop{padding:10px;min-height:120px;display:flex;gap:10px;flex-wrap:wrap;position:relative}
+.tier-drop{padding:10px;min-height:120px;display:flex;gap:10px;flex-wrap:wrap;position:relative;flex:1}
 .tier-drop:empty::after{
   content:"Drop songs here"; 
   position:absolute; 

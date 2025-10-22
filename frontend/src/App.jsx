@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import {
   DndContext,
-  closestCenter,
+  rectIntersection,
   useDroppable,
   DragOverlay,
   useSensor,
@@ -78,11 +78,11 @@ function Droppable({ id, className, children }) {
 function TierRow({ id, items, label, color, children }) {
   const { setNodeRef } = useDroppable({ id });
   return (
-    <div className="tier-row" ref={setNodeRef} id={id}>
+    <div className="tier-row" id={id}>
       <div className="tier-badge" style={{ background: color }}>
         <span className="tier-badge-text">{label || " "}</span>
       </div>
-      <div className="tier-drop">
+      <div className="tier-drop" ref={setNodeRef}>
         <SortableContext items={items.map(x => x.id)} strategy={rectSortingStrategy}>
           {children}
         </SortableContext>
@@ -416,7 +416,7 @@ export default function App() {
 
       <DndContext
         sensors={boardSensors}
-        collisionDetection={closestCenter}
+        collisionDetection={rectIntersection}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
         onDragCancel={onDragCancel}
