@@ -14,9 +14,7 @@ This guide will help you deploy your Spotify Tierlist app to production using Ve
 1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
 2. Create a new app
 3. Note down your **Client ID** and **Client Secret**
-4. Add these redirect URIs:
-   - `http://localhost:5000/callback` (for local development)
-   - `https://your-railway-app.railway.app/callback` (for production - you'll get this URL later)
+4. No redirect URIs needed for public playlist access
 
 ## Step 2: Deploy Backend to Railway
 
@@ -42,10 +40,7 @@ This guide will help you deploy your Spotify Tierlist app to production using Ve
      ```
      SPOTIFY_CLIENT_ID=your_spotify_client_id
      SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
-     SPOTIFY_REDIRECT_URI=https://your-railway-app.railway.app/callback
-     SPOTIFY_SCOPES=playlist-read-private playlist-read-collaborative
      FRONTEND_ORIGIN=https://your-vercel-app.vercel.app
-     FLASK_SECRET_KEY=your-random-secret-key-here
      ```
 
 6. **Deploy:**
@@ -79,10 +74,7 @@ This guide will help you deploy your Spotify Tierlist app to production using Ve
 
 ## Step 4: Update Spotify App Settings
 
-1. **Go back to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)**
-2. **Edit your app settings:**
-   - Add `https://your-railway-app.railway.app/callback` to Redirect URIs
-   - Save changes
+1. **No additional Spotify configuration needed** - public playlists work with just Client ID and Secret
 
 ## Step 5: Update Railway Environment Variables
 
@@ -94,21 +86,16 @@ FRONTEND_ORIGIN=https://your-vercel-app.vercel.app
 ## Step 6: Test Your Deployment
 
 1. Visit your Vercel frontend URL
-2. **Test public playlists**: Paste any public Spotify playlist URL - should work without login
-3. **Test private playlists**: Try a private playlist - should prompt for Spotify login
-4. **Test tier list creation**: Drag songs into tiers and export as PNG
+2. **Test public playlists**: Paste any public Spotify playlist URL - should work immediately
+3. **Test tier list creation**: Drag songs into tiers and export as PNG
 
 ## How the App Works
 
-### Public Playlists (No Login Required)
+### Public Playlists Only
 - Users can paste any public Spotify playlist URL
 - App automatically loads tracks using Spotify's client credentials
 - Works immediately without any authentication
-
-### Private Playlists (Optional Login)
-- If a playlist is private, app shows a clear error message
-- User can click "Login for Private Playlists" to authenticate with Spotify
-- After login, they can access their private playlists
+- Private playlists are not supported
 
 ### Tier List Features
 - Drag and drop songs into custom tiers
@@ -120,7 +107,6 @@ FRONTEND_ORIGIN=https://your-vercel-app.vercel.app
 ### Backend Issues
 - Check Railway logs: Go to your service → Deployments → View logs
 - Verify all environment variables are set correctly
-- Make sure your Spotify app redirect URI matches your Railway URL
 - **No database errors**: The app no longer uses a database
 
 ### Frontend Issues
@@ -130,7 +116,7 @@ FRONTEND_ORIGIN=https://your-vercel-app.vercel.app
 
 ### Common Issues
 - **CORS errors**: Make sure `FRONTEND_ORIGIN` in Railway matches your Vercel URL exactly
-- **Spotify auth fails**: Verify redirect URI in Spotify app settings
+- **Playlist not found**: Make sure you're using a public playlist URL
 - **Public playlist not loading**: Check that `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` are set correctly
 
 ## Cost
